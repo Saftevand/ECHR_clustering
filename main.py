@@ -1,26 +1,60 @@
+import DataLoader
+import Clustering
 import pickle
-
-import visualization
-import numpy as np
+import Document
 
 
-matrix = np.array([[0, 1, 1, 0, 0],
-                   [1, 0, 0, 0, 0],
-                   [1, 0, 0, 0, 0],
-                   [0, 0, 0, 0, 1],
-                   [0, 0, 0, 1, 0]])
-
-matrix2 = np.random.randint(4, size=(10, 10))
-
-#matrix = None
-
-
-#with open("affinity_prop_labels.pkl", "rb") as labels_pickle:
-#    labels = pickle.load(labels_pickle)
-
-#print(labels)
+def main():
+    '''
+    documents = DataLoader.load_dataset()
+    with open("documents.pkl", "wb") as documents_pickle:
+        pickle.dump(documents, documents_pickle, protocol=pickle.HIGHEST_PROTOCOL)
+    DataLoader.fix_references(documents)
+    DataLoader.find_bad_refs(documents)
+    with open("documents.pkl", "wb") as documents_pickle:
+        pickle.dump(documents, documents_pickle, protocol=pickle.HIGHEST_PROTOCOL)
+    '''
 
 
+    # this is text to disable advanced code assistance
+    documents = []
+    ref_matrix = None
+    #with open("documents.pkl", "rb") as documents_pickle:
+    #    print("Loading documents")
+    #    documents = pickle.load(documents_pickle)
+
+    with open("reference_matrix.pkl", "rb") as references_pickle:
+        print("Loading reference_matrix")
+        ref_matrix = pickle.load(references_pickle)
+
+    results = Clustering.eigenDecomposition(ref_matrix)
+    print(results)
+    #print("Calculating reference matrix")
+    #ref_matrix = DataLoader.get_sparse_reference_matrix(documents)
+
+    #print("Creating sparse tfidf")
+    #sparse_tfidf = DataLoader.get_sparse_tfidf_matrix(documents)
+
+    #print("Calculating cosine-similarities")
+    #cosine_similarities = Clustering.calc_cosine_similarity(sparse_tfidf)
 
 
-visualization.gui_graph_run(matrix=matrix)
+
+    print("Complete")
+
+    '''
+    test1 = Document.Document(application_id=1, document_id=1, title='one',
+                                 bag_of_words=None, tf_idf=None, references={'4': '4', '5': '5', '3':'3'},
+                                 related_appnos=['4', '5'], multiple_appnos=True)
+    test2 = Document.Document(application_id=1, document_id=1, title='two',
+                              bag_of_words=None, tf_idf=None, references={'4': '4', '5': '5', '6':'6'},
+                              related_appnos=[], multiple_appnos=False)
+    test = [test1, test2]
+    print("stop")
+    DataLoader.fix_references(test)
+    print("stop")
+    '''
+
+if __name__ == "__main__":
+    main()
+
