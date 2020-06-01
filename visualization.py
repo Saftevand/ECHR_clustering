@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 import plotly.graph_objs as go
 import pandas as pd
 
-def gui_graph_run(matrix = None):
+
+def gui_graph_run(matrix=None):
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
     app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
     app.title = "ECHR Clustering Example"
@@ -101,7 +102,6 @@ def gui_graph_run(matrix = None):
                                 ) for edge in G.edges]
                             )}
 
-
     app.layout = html.Div([
         html.Div(className="main_graph",
                  children=[dcc.Graph(id="my-graph", figure=my_figure),]),
@@ -121,13 +121,10 @@ def gui_graph_run(matrix = None):
         )
     ])
 
-
-
     @app.callback(
         dash.dependencies.Output('click-data', 'children'),
         [dash.dependencies.Input('my-graph', 'clickData')])
     def display_click_data(clickData):
         return html.Div(html.A(href=web_dict[clickData['points'][0]['pointIndex']], target='_blank', title='Click to go to article', children=[name_dict[clickData['points'][0]['pointIndex']],]), 'test')
-
 
     app.run_server(debug=True)
