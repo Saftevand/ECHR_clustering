@@ -17,23 +17,30 @@ def main():
 
 
     # this is text to disable advanced code assistance
-    with open("documents.pkl", "rb") as documents_pickle:
+    documents = []
+    ref_matrix = None
+    #with open("documents.pkl", "rb") as documents_pickle:
+    #    print("Loading documents")
+    #    documents = pickle.load(documents_pickle)
 
-        print("Loading documents")
-        documents = pickle.load(documents_pickle)
+    with open("reference_matrix.pkl", "rb") as references_pickle:
+        print("Loading reference_matrix")
+        ref_matrix = pickle.load(references_pickle)
 
-        print("Calculating reference matrix")
-        ref_matrix = DataLoader.get_sparse_reference_matrix(documents)
+    results = Clustering.eigenDecomposition(ref_matrix)
+    print(results)
+    #print("Calculating reference matrix")
+    #ref_matrix = DataLoader.get_sparse_reference_matrix(documents)
 
-        print("Creating sparse tfidf")
-        sparse_tfidf = DataLoader.get_sparse_tfidf_matrix(documents)
+    #print("Creating sparse tfidf")
+    #sparse_tfidf = DataLoader.get_sparse_tfidf_matrix(documents)
 
-        print("Calculating cosine-similarities")
-        cosine_similarities = Clustering.calc_cosine_similarity(sparse_tfidf)
+    #print("Calculating cosine-similarities")
+    #cosine_similarities = Clustering.calc_cosine_similarity(sparse_tfidf)
 
 
 
-        print("Complete")
+    print("Complete")
 
     '''
     test1 = Document.Document(application_id=1, document_id=1, title='one',
