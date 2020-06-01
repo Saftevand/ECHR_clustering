@@ -2,3 +2,5 @@
 .idea/
 
 documents.pkl
+
+__pycache__/
