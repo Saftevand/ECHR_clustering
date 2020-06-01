@@ -3,7 +3,7 @@ import json
 import Document
 from sklearn.feature_extraction import DictVectorizer
 
-dataset_path = 'D:\AI-for-the-people\structured' #'D:\datasets\ECHR_DATASET'
+dataset_path = 'E:\Job AAU\ECHR-OD_process-develop\\build\echr_database\structured' # 'D:\AI-for-the-people\structured' #'D:\datasets\ECHR_DATASET'
 tfidf_folder_path = os.path.join(dataset_path, 'tfidf')
 bow_folder_path = os.path.join(dataset_path, 'bow')
 references_path = os.path.join(dataset_path, 'matrice_appnos.json')
