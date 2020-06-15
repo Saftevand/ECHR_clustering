@@ -9,10 +9,17 @@ bow_folder_path = os.path.join(dataset_path, 'bow')
 references_path = os.path.join(dataset_path, 'matrice_appnos.json')
 cases_path = os.path.join(dataset_path, 'cases.json')
 
+def validate_json_load():
+    with open(references_path) as reference_file:
+        reference_dict = json.load(reference_file)
+    print(len(reference_dict.keys()))
+
+
 
 def load_dataset():
     reference_multikey_count = 0
     documents = []
+    debug_count = 0
 
     with open(references_path) as reference_file:
         reference_dict = json.load(reference_file)
@@ -41,6 +48,57 @@ def load_dataset():
             reference_list = []
             multiple_appnos = False
 
+            # all_oppnos_for_document = application_number.split(';')
+
+            # Alle keys hvor application number indgår
+            matching_key = [key for key in reference_dict.keys() if application_number in key.split(';')]
+            multi_refs = []
+            temp_internal_appnos = []
+            for k in matching_key:
+                multi_refs.extend(reference_dict[k].keys())
+
+                split = k.split(';')
+                temp_internal_appnos.extend(split)
+
+            # alle outgoing refs fra "matching keys"
+            multi_refs = remove_dups(multi_refs)
+
+            # alle appnos i hver "matching key"
+            temp_internal_appnos = remove_dups(temp_internal_appnos)
+
+            document = Document.Document(application_id=application_number, document_id=document_id,
+                                         title=document_name, bag_of_words=bow_dict, tf_idf=tfidf_dict,
+                                         references_appno=multi_refs,
+                                         internal_appnos=temp_internal_appnos,
+                                         multiple_appnos=multiple_appnos)  # related_appnos=remaining_appnos
+            documents.append(document)
+            print(f'Loaded document: {index}')
+            '''
+            debug_count += 1
+            if debug_count == 1000:
+                docCount = 1
+                for doc in documents:
+                    print(f'reffing doc {docCount}')
+                    docCount += 1
+                    for outgoing in doc.all_refs:
+                        for other_doc in documents:
+                            if outgoing in other_doc.internal_appnos:
+                                doc.outgoing_refs[other_doc.document_id] = 1
+                print("stopo")
+            '''
+
+    for doc in documents:
+        # tjekker alle refs (internal og outgoing)
+        for outgoing in doc.all_refs:
+            for other_doc in documents:
+                # hvis appno er i andet docs internal appno --> ref fra doc til doc
+                if outgoing in other_doc.internal_appnos:
+                    doc.outgoing_refs[other_doc.document_id] = 1
+    print("test")
+
+
+
+    '''
             try:
                 references_for_document = reference_dict[application_number]
                 remaining_appnos = []
@@ -50,7 +108,7 @@ def load_dataset():
                 multiple_appnos = True
 
                 # TODO problem her. application number må ikke søges efter sådan. når manleder efter fx 223 vil case 4223 også blive accepteret. kan ikke reddes med f';{application_number};' desværre
-                matching_key = [key for key in reference_dict.keys() if application_number in key]
+                matching_key = [key for key in reference_dict.keys() if application_number in key.split(';')]
                 # find 7714/06 --> 27714/06;3213/12,   3848;7714/06
                 if len(matching_key) > 1:
                     # this, hopefully does not happen
@@ -78,14 +136,32 @@ def load_dataset():
                 # remaining appnos will be contained in document class for future display.. possibly
                 remaining_appnos = split_keys[1:]
                 reference_multikey_count += 1
+            
 
-            document = Document.Document(application_id=application_number, document_id=document_id, title=document_name, bag_of_words=bow_dict, tf_idf=tfidf_dict, references=references_for_document, related_appnos=remaining_appnos, multiple_appnos=multiple_appnos)
+            document = Document.Document(application_id=application_number, document_id=document_id, title=document_name, bag_of_words=bow_dict, tf_idf=tfidf_dict, references_appno=references_for_document, internal_appnos=all_oppnos_for_document, multiple_appnos=multiple_appnos) # related_appnos=remaining_appnos
             documents.append(document)
             print(f'Loaded document: {index}')
+            '''
 
     print(f'Reference_multikey_count: {reference_multikey_count}')
     print('Succesfully loaded dataset')
+
+    for doc in documents:
+        refs = doc.all_refs
+        for ref in refs:
+            for other_doc in documents:
+                # Hvis other doc indeholder appno vi leder efter sætter vi en ref
+                if ref in other_doc.internal_appnos:
+                    doc.final_ref[other_doc.document_id] = 1
+                    break
+
+
+
     return documents
+
+def remove_dups(some_list):
+    temp = set(some_list)
+    return list(temp)
 
 def get_sparse_tfidf_matrix(documents):
     tfidf_dicts = []
@@ -130,4 +206,31 @@ def find_bad_refs(documents):
             if ref not in set_appnos:
                 remove_list.append(ref)
         for remove in remove_list:
+            print(f'Entry {remove} has bad out ref')
             del doc.references[remove]
+
+
+def remove_docs_no_in_out_refs(documents):
+    no_outgoing = []
+    for doc in documents:
+        l = len(doc.references.keys())
+        if l == 0:
+            no_outgoing.append(doc.application_id)
+
+    print(len(no_outgoing))
+
+    for doc in documents:
+        for key in doc.references.keys():
+            if key in no_outgoing:
+                no_outgoing.remove(key)
+                if len(no_outgoing) == 0:
+                    break
+
+    if len(no_outgoing) == 0:
+        print("no_outgoing empty before return")
+        return documents
+    else:
+        print("working")
+        return [x for x in documents if x.application_id not in no_outgoing]
+
+
