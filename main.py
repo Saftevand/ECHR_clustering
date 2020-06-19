@@ -1,116 +1,55 @@
-import DataLoader
 import Clustering
-import pickle
-import numpy
-import Document
-from sklearn.cluster import KMeans
+import DataLoader
 import visualization
+import pickle
 
+json_path = 'D:\\datasets\\ECHR-OD_process-develop\\build\\echr_database\\preprocessed_documents'
+dataset_raw_documents_path = 'D:\\datasets\\ECHR-OD_process-develop\\build\echr_database\\raw_documents\\test'
+full_txt_dir = 'D:\\datasets\\ECHR-OD_process-develop\\build\\echr_database\\preprocessed_documents\\full_txt'
+tokenized_txt_dir = 'D:\\datasets\\ECHR-OD_process-develop\\build\\echr_database\\preprocessed_documents\\tokenized'
+
+
+
+def visualize_only():
+    documents, labels, adj_matrix = DataLoader.load_data_for_visualize()
+    visualization.doc_to_vec_visualize(documents=documents, labels=labels, adj_matrix=adj_matrix)
+
+def run_pipeline():
+    # Loads documents and TaggedDocuments (used for training)
+    tagged_documents = DataLoader.load_tagged()
+    all_documents = DataLoader.load_all_documents()
+    adjacency_matrix_references_all_documents = DataLoader.load_adjacency_matrix_all_documents()
+
+    # Trains doc2vec
+    model = Clustering.train_doc2vec(tagged_data=tagged_documents, epochs_to_run=1, embedding_size=100)
+    # Runs HDBSCAN, returns a list of labels (a label for each documents. -1 == outlier)
+    labels = Clustering.run_hdbscan(model)
+
+    # Extracts the documents which have been clustered such that we have no outliers
+    # Mask denotes the ones to include and exclude. Labels of the clustered documents and the clustered documents
+    mask, labels_subset, clustered_documents = Clustering.extract_clustered_documents(all_documents, labels)
+
+    # Creates the adjacency matrix for references between clusters
+    cluster_references_adjacency = Clustering.create_adjacency_matrix_for_clusters(mask=mask, labels=labels_subset,
+                                                                                   adjacency_references_all_documents=
+                                                                                   adjacency_matrix_references_all_documents)
+    # k-nearest undirected adjacency
+    cluster_references_adjacency = Clustering.make_adjacency_matrix_undirected(cluster_references_adjacency, k=3)
+    DataLoader.save_data(cluster_references_adjacency, clustered_documents, labels_subset)
+
+    visualization.doc_to_vec_visualize(documents=clustered_documents, adj_matrix=cluster_references_adjacency, labels=labels_subset)
 
 def main():
+    train = True
 
-    #documents = DataLoader.load_dataset()
-    #with open("documents.pkl", "wb") as documents_pickle:
-    #    pickle.dump(documents, documents_pickle, protocol=pickle.HIGHEST_PROTOCOL)
-    #DataLoader.fix_references(documents)
-    #DataLoader.find_bad_refs(documents)
-    #with open("documents.pkl", "wb") as documents_pickle:
-    #    pickle.dump(documents, documents_pickle, protocol=pickle.HIGHEST_PROTOCOL)
+    if train:
+        #Run training
+        run_pipeline()
 
-
-
-    # this is text to disable advanced code assistance
-    documents = []
-    ref_matrix = None
-    with open("documents.pkl", "rb") as documents_pickle:
-        print("Loading documents")
-        documents = pickle.load(documents_pickle)
-    with open("sparse_tfidf.pkl", "rb") as documents_pickle:
-        print("Loading tfidf")
-        sparse_tfidf = pickle.load(documents_pickle)
-    with open("cosine_sim.pkl", "rb") as documents_pickle:
-        print("Loading cosine similarities")
-        cosine_similarities = pickle.load(documents_pickle)
-    #with open("clusters10.pkl", "rb") as documents_pickle:
-    #    print("Loading km")
-    #    km = pickle.load(documents_pickle)
-    #with open("adj_matrix.pkl", "rb") as documents_pickle:
-    #    print("Loading adj_matrix")
-    #    adj_matrix = pickle.load(documents_pickle)
+    else:
+        # Visualize only
+        visualize_only()
 
 
-
-
-    k = 10
-
-    km = KMeans(n_clusters=k)
-
-    km.fit(sparse_tfidf)
-
-    clusters = km.labels_.tolist()
-
-    with open("clusters10.pkl", "wb") as documents_pickle:
-       pickle.dump(km, documents_pickle, protocol=pickle.HIGHEST_PROTOCOL)
-
-
-
-
-
-    def create_adj_matrix():
-        m = len(documents)
-        matrix = numpy.full((m, m), 0)
-        for x in range(m):
-            for y in range(m):
-                if cosine_similarities[x][y] > 0.5:
-                    matrix[x][y] = 1
-
-        return matrix
-
-    adj_matrix = create_adj_matrix()
-
-    with open("adj_matrix.pkl", "wb") as documents_pickle:
-       pickle.dump(adj_matrix, documents_pickle, protocol=pickle.HIGHEST_PROTOCOL)
-
-    visualization.gui_graph_run(adj_matrix)
-
-
-    #with open("reference_matrix.pkl", "rb") as references_pickle:
-    #    print("Loading reference_matrix")
-    #    ref_matrix = pickle.load(references_pickle)
-
-    #results = Clustering.eigenDecomposition(ref_matrix)
-    #print(results)
-
-    #print("Calculating reference matrix")
-    #ref_matrix = DataLoader.get_sparse_reference_matrix(documents)
-
-    #print("Creating sparse tfidf")
-    #sparse_tfidf = DataLoader.get_sparse_tfidf_matrix(documents)
-
-    #with open("sparse_tfidf.pkl", "wb") as documents_pickle:
-    #    pickle.dump(sparse_tfidf, documents_pickle, protocol=pickle.HIGHEST_PROTOCOL)
-
-    #print("Calculating cosine-similarities")
-    #cosine_similarities = Clustering.calc_cosine_similarity(sparse_tfidf)
-
-    #with open("cosine_sim.pkl", "wb") as documents_pickle:
-    #    pickle.dump(cosine_similarities, documents_pickle, protocol=pickle.HIGHEST_PROTOCOL)
-
-    print("Complete")
-
-    '''
-    test1 = Document.Document(application_id=1, document_id=1, title='one',
-                                 bag_of_words=None, tf_idf=None, references={'4': '4', '5': '5', '3':'3'},
-                                 related_appnos=['4', '5'], multiple_appnos=True)
-    test2 = Document.Document(application_id=1, document_id=1, title='two',
-                              bag_of_words=None, tf_idf=None, references={'4': '4', '5': '5', '6':'6'},
-                              related_appnos=[], multiple_appnos=False)
-    test = [test1, test2]
-    print("stop")
-    DataLoader.fix_references(test)
-    print("stop")
-    '''
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
-

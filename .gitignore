@@ -4,3 +4,27 @@
 documents.pkl
 
 __pycache__/
+
+adjacency_matrix_normalised_k_nearest.npy
+
+adjacency_references_all_documents.npy
+
+cluster_adjacency.npy
+
+clustered_documents.pkl
+
+d2v.model
+
+d2v.model.trainables.syn1neg.npy
+
+d2v.model.wv.vectors.npy
+
+labels_clustered.npy
+
+labels.npy
+
+mask.npy
+
+tagged_documents_clustered.pickle
+
+tagged_documents.pickle

@@ -1,15 +1,67 @@
 import networkx as nx
-import plotly
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Output, Input
-import matplotlib.pyplot as plt
 import plotly.graph_objs as go
-import pandas as pd
+import sys
+import numpy as np
 
 
-def gui_graph_run(matrix=None):
+def create_adj_matrix(documents, cosine_similarities):
+    m = len(documents)
+    matrix = np.full((m, m), 0.0)
+    for x in range(m):
+        if x % 1000 == 0:
+            print('Progress: ' + str(x) + ' / ' + str(m))
+        for y in range(m):
+            if cosine_similarities[x][y] > 0.0:  # Change 0.0 if there needs to be a cutoff based on the similarity
+                matrix[x][y] = cosine_similarities[x][y]
+
+    return matrix
+
+
+def create_name_and_web_dicts(k_clusters):
+    name_dict = {}
+    web_dict = {}
+    for i in range(len(k_clusters)):
+        cluster_name = {}
+        cluster_web = {}
+        for j in range(len(k_clusters[i])):
+            cluster_name[j] = k_clusters[i][j].title
+            cluster_web[j] = 'http://hudoc.echr.coe.int/eng?i=' + k_clusters[i][j].document_id
+        name_dict[i] = cluster_name
+        web_dict[i] = cluster_web
+    return name_dict, web_dict
+
+
+def create_clusters(documents, clusters, k):
+    masks = []
+    for i in range(k):
+        mask = clusters == i
+        masks.append(mask)
+
+    k_clusters = []
+    for mask in masks:
+        cluster = documents[mask]
+        k_clusters.append(cluster)
+    return k_clusters
+
+
+def doc_to_vec_visualize(documents=None, adj_matrix=None, labels=None):
+
+
+    documents = np.array(documents)
+    clusters = create_clusters(clusters=labels, documents=documents, k=adj_matrix.shape[0])
+
+    name_dict, web_dict = create_name_and_web_dicts(clusters)
+    sorted_clusters = []
+    for clust in clusters:
+        sorted_clusters.append(sorted(clust, key=lambda x: x.pagerank, reverse=True))
+
+    gui_graph_run_doc_to_vec(matrix=adj_matrix, name_dict=name_dict, web_dict=web_dict, docs=sorted_clusters)
+
+
+def gui_graph_run_doc_to_vec(matrix=None, name_dict=None, web_dict=None, docs=None):
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
     app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
     app.title = "ECHR Clustering Example"
@@ -17,36 +69,21 @@ def gui_graph_run(matrix=None):
     if matrix is not None:
         G = nx.from_numpy_array(A=matrix, create_using=nx.Graph)
     else:
-        # TODO error handling istedet for det her
-        print('No matrix found, creating default one')
-        G = nx.Graph()
-        G.add_node(0)
-        G.add_node(1)
-        G.add_node(2)
-        G.add_node(3)
-        G.add_node(4)
-        G.add_edge(1, 2)
-        G.add_edge(0, 2)
-        G.add_edge(3, 4)
-        G.add_edge(4, 2)
-        G.add_edge(1, 4)
-        G.add_edge(4, 1)
+        sys.exit('matrix is None, stopping the program')
+    if name_dict is None:
+        sys.exit('name_dict is None, stopping the program')
+    if web_dict is None:
+        sys.exit('web_dict is None, stopping the program')
+    if docs is None:
+        sys.exit('docs is None, stopping the program')
 
-    # TODO gør dynamisk her under
-    web_dict = {0: 'https://hudoc.echr.coe.int/eng#{%22tabview%22:[%22document%22],%22itemid%22:[%22001-202429%22]}',
-                1: 'https://hudoc.echr.coe.int/eng#{%22tabview%22:[%22document%22],%22itemid%22:[%22001-202433%22]}',
-                2: 'https://hudoc.echr.coe.int/eng#{%22tabview%22:[%22document%22],%22itemid%22:[%22001-202212%22]}',
-                3: 'https://hudoc.echr.coe.int/eng#{%22tabview%22:[%22document%22],%22itemid%22:[%22001-202392%22]}',
-                4: 'https://hudoc.echr.coe.int/eng#{%22tabview%22:[%22document%22],%22itemid%22:[%22001-202428%22]}'}
-    name_dict = {0: 'CASE OF KOROSTELEV v. RUSSIA',
-                 1: 'CASE OF SUDITA KEITA v. HUNGARY',
-                 2: 'CASE OF ANAHIT MKRTCHYAN v. ARMENIA',
-                 3: 'CASE OF VARDOSANIDZE v. GEORGIA',
-                 4: 'CASE OF CANLI v. TURKEY'}
-
-    pos = nx.layout.shell_layout(G)
+    pos = nx.layout.spring_layout(G)
     for node in G.nodes:
         G.nodes[node]['pos'] = list(pos[node])
+
+    sizes = []
+    for doc in docs:
+        sizes.append(np.log(len(doc))*10)
 
     traceRecode = []
     node_trace = go.Scatter(x=[],
@@ -55,20 +92,18 @@ def gui_graph_run(matrix=None):
                             text=[],
                             mode='markers+text',
                             textposition="middle center",
-                            textfont=dict(family="sans serif", size=18, color="Black"),
+                            textfont=dict(family="sans serif", size=25, color="Black"),
                             hoverinfo="text",
-                            marker={'symbol': 'circle', 'size': 50, 'color': 'steelblue'})
+                            marker={'symbol': 'circle', 'size': sizes, 'color': 'steelblue'})
 
-    index = 0
     for node in G.nodes():
         x, y = G.nodes[node]['pos']
-        hovertext = name_dict[node] #str(node)
+        hovertext = 'Cluster ' + str(node) #name_dict[node] #str(node)
         text = str(node)
         node_trace['x'] += tuple([x])
         node_trace['y'] += tuple([y])
         node_trace['hovertext'] += tuple([hovertext])
         node_trace['text'] += tuple([text])
-        index = index + 1
 
     traceRecode.append(node_trace)
 
@@ -86,10 +121,6 @@ def gui_graph_run(matrix=None):
                             clickmode='event+select',
                             annotations=[
                                 dict(
-                                    #ax=(G.nodes[edge[0]]['pos'][0] + G.nodes[edge[1]]['pos'][0]) / 2,
-                                    #ay=(G.nodes[edge[0]]['pos'][1] + G.nodes[edge[1]]['pos'][1]) / 2, axref='x', ayref='y',
-                                    #x=(G.nodes[edge[1]]['pos'][0] * 3 + G.nodes[edge[0]]['pos'][0]) / 4,
-                                    #y=(G.nodes[edge[1]]['pos'][1] * 3 + G.nodes[edge[0]]['pos'][1]) / 4, xref='x', yref='y',
                                     ax= G.nodes[edge[0]]['pos'][0],
                                     ay= G.nodes[edge[0]]['pos'][1], axref='x', ayref='y',
                                     x= G.nodes[edge[1]]['pos'][0],
@@ -97,9 +128,10 @@ def gui_graph_run(matrix=None):
                                     showarrow=True,
                                     arrowhead=0,
                                     arrowsize=4,
-                                    arrowwidth=1,
+                                    arrowwidth=1+(matrix[edge[0]][edge[1]]*10),
                                     opacity=1
-                                ) for edge in G.edges]
+                                ) for edge in G.edges
+                            ]
                             )}
 
     app.layout = html.Div([
@@ -111,10 +143,8 @@ def gui_graph_run(matrix=None):
                 html.Div(
                     className='twelve columns',
                     children=[
-                        dcc.Markdown("""
-                                    **Selected document:**
-                                    """),
-                        html.Pre(id='click-data', children=['No document selected, click on a note to select a document'])
+                        html.H2('Selected cluster:'),
+                        html.Pre(id='click-data', children=['No cluster selected, click on a cluster to select a document'])
                     ],
                     style={'height': '400px'})
             ]
@@ -125,6 +155,28 @@ def gui_graph_run(matrix=None):
         dash.dependencies.Output('click-data', 'children'),
         [dash.dependencies.Input('my-graph', 'clickData')])
     def display_click_data(clickData):
-        return html.Div(html.A(href=web_dict[clickData['points'][0]['pointIndex']], target='_blank', title='Click to go to article', children=[name_dict[clickData['points'][0]['pointIndex']],]), 'test')
+        doc_conclusion_header = html.H3('Highest pageranked document\n')
+        doc_conclusion_link = html.A(href=web_dict[clickData['points'][0]['pointIndex']][0], target='_blank', title='Click to go to article', children=[name_dict[clickData['points'][0]['pointIndex']][0],])
+        doc_conclusion_articles = html.H6('\nArticles\n')
+        doc_conclusion = html.H6('\nConclusion\n')
 
-    app.run_server(debug=True)
+        documents_in_cluster = html.H3('\nOther documents in cluster(sorted by page rank): \n')
+        documents_with_links = []
+
+        for i in range(len(web_dict[clickData['points'][0]['pointIndex']])):
+            documents_with_links.append(html.Div(children=[html.A(href=web_dict[clickData['points'][0]['pointIndex']][i], target='_blank', title='Click to go to article', children=['{:_<60}'.format(name_dict[clickData['points'][0]['pointIndex']][i]),]),
+                                                 '\tArticles: ',
+                                                 docs[clickData['points'][0]['pointIndex']][i].articles]))
+            documents_with_links.append('\n')
+
+        return html.Div(children=[doc_conclusion_header,
+                                  doc_conclusion_link,
+                                  doc_conclusion_articles,
+                                  docs[clickData['points'][0]['pointIndex']][0].articles,
+                                  doc_conclusion,
+                                  docs[clickData['points'][0]['pointIndex']][0].conclusion.replace(';', '\n'),
+                                  '\n',
+                                  documents_in_cluster,
+                                  html.Div(children=documents_with_links)])
+
+    app.run_server(debug=False)
