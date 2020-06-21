@@ -33,6 +33,7 @@ def run_pipeline():
     cluster_references_adjacency = Clustering.create_adjacency_matrix_for_clusters(mask=mask, labels=labels_subset,
                                                                                    adjacency_references_all_documents=
                                                                                    adjacency_matrix_references_all_documents)
+
     # k-nearest undirected adjacency
     cluster_references_adjacency = Clustering.make_adjacency_matrix_undirected(cluster_references_adjacency, k=3)
     DataLoader.save_data(cluster_references_adjacency, clustered_documents, labels_subset)
@@ -44,7 +45,7 @@ def main():
     train = True
 
     if train:
-        #Run training
+        # Run training
         run_pipeline()
 
     else:

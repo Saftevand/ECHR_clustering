@@ -180,7 +180,7 @@ def lookup(content, string_list=[]):
 
 
 def load_tagged(path="tagged_documents.pickle"):
-    tagged_data = pickle.load(open(os.path.join(tokenized_txt_dir, path), "rb"))
+    tagged_data = pickle.load(open(path, "rb"))
     print("Loaded tagged_data")
     return tagged_data
 

@@ -88,7 +88,7 @@ def make_adjacency_matrix_undirected(adjacency_matrix, k=3):
     for index in range(shape):
         diag_val = diag[index]
         adjacency_matrix[index][index] = diag_val
-
+    return  adjacency_matrix
 
 
 
