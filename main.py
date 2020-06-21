@@ -1,7 +1,6 @@
 import Clustering
 import DataLoader
 import visualization
-from gensim.models.doc2vec import Doc2Vec
 
 
 json_path = 'D:\\datasets\\ECHR-OD_process-develop\\build\\echr_database\\preprocessed_documents'
@@ -46,7 +45,7 @@ def run_pipeline_with_pretrained_doc2vec():
     all_documents = DataLoader.load_all_documents()
     adjacency_matrix_references_all_documents = DataLoader.load_adjacency_matrix_all_documents()
     # Load model
-    model = Doc2Vec.load('d2v.model')
+    model = DataLoader.load_model()
     # Runs HDBSCAN, returns a list of labels (a label for each documents. -1 == outlier)
     labels = Clustering.run_hdbscan(model)
 

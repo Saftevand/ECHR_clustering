@@ -7,7 +7,7 @@ import json
 import glob
 import networkx as nx
 from sklearn.feature_extraction import DictVectorizer
-from gensim.models.doc2vec import TaggedDocument
+from gensim.models.doc2vec import TaggedDocument, Doc2Vec
 from nltk.tokenize import word_tokenize
 
 
@@ -100,6 +100,11 @@ def load_all_documents():
     documents = pickle.load(open('documents.pkl', "rb"))
     return documents
 
+def load_model():
+    print('Loading model')
+    model = Doc2Vec.load('d2v.model')
+    print('Model loaded')
+    return model
 
 def load_adjacency_matrix_all_documents():
     adjacency = pickle.load(open("adjacency_references_all_documents.pkl", "rb"))

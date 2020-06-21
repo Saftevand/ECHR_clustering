@@ -24,7 +24,7 @@ def create_documents_for_clustering(documents, labels=None, mask=None):
 
 # Creates reference adjacency matrix of the clusters found by HDBSCAN
 def create_adjacency_matrix_for_clusters(mask, labels, adjacency_references_all_documents):
-
+    print('Creating edges_dict')
     np.fill_diagonal(adjacency_references_all_documents, 0)
     number_of_clusters = len((set(labels)))
     edges_dict = defaultdict(lambda: defaultdict(int))
@@ -95,12 +95,13 @@ def make_adjacency_matrix_undirected(adjacency_matrix, k=3):
 
 # Runs hdbscan with default parameters
 def run_hdbscan(model, min_cluster_size = 4, min_samples = 4):
-
+    print('Running HDBSCAN')
     clusterer = hdbscan.HDBSCAN(metric='cosine', algorithm='generic', min_cluster_size=min_cluster_size, min_samples=min_samples)
     clusterer.fit(model.docvecs.vectors_docs.astype('double'))
     labels = clusterer.labels_
     with open('labels.npy', 'wb') as f:
         np.save(f, labels)
+    print('HDBSCAN done')
     return labels
 
 
