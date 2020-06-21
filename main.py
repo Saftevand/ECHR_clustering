@@ -1,7 +1,7 @@
 import Clustering
 import DataLoader
 import visualization
-import pickle
+
 
 json_path = 'D:\\datasets\\ECHR-OD_process-develop\\build\\echr_database\\preprocessed_documents'
 dataset_raw_documents_path = 'D:\\datasets\\ECHR-OD_process-develop\\build\echr_database\\raw_documents\\test'
@@ -40,6 +40,7 @@ def run_pipeline():
     visualization.doc_to_vec_visualize(documents=clustered_documents, adj_matrix=cluster_references_adjacency, labels=labels_subset)
 
 def main():
+
     train = True
 
     if train:

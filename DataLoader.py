@@ -3,9 +3,12 @@ import json
 import Document
 import pickle
 import numpy as np
-import hdbscan
+import json
+import glob
 import networkx as nx
 from sklearn.feature_extraction import DictVectorizer
+from gensim.models.doc2vec import TaggedDocument
+from nltk.tokenize import word_tokenize
 
 
 json_path = 'D:\\datasets\\ECHR-OD_process-develop\\build\\echr_database\\preprocessed_documents'
@@ -16,9 +19,6 @@ tokenized_txt_dir = 'D:\\datasets\\ECHR-OD_process-develop\\build\\echr_database
 
 #dataset_path = 'E:\Job AAU\ECHR-OD_process-develop\\build\echr_database\structured' # 'D:\AI-for-the-people\structured'
 dataset_path = 'D:\datasets\ECHR_DATASET'
-
-tfidf_folder_path = os.path.join(dataset_path, 'tfidf')
-bow_folder_path = os.path.join(dataset_path, 'bow')
 references_path = os.path.join(dataset_path, 'matrice_appnos.json')
 cases_path = os.path.join(dataset_path, 'cases.json')
 
@@ -83,7 +83,7 @@ def load_dataset():
 def save_data(adjacency_matrix, clustered_documents, labels):
     np.save('adjacency_matrix_normalised_k_nearest.npy', adjacency_matrix)
     np.save('labels_clustered.npy', labels)
-    with open('clustered_documents.pkl', "wb", encoding='utf-8') as file:
+    with open('clustered_documents.pkl', "wb") as file:
         pickle.dump(clustered_documents, file)
 
 def assign_pagerank_to_documents(documents, adjacency_matrix):
@@ -102,9 +102,8 @@ def load_all_documents():
 
 
 def load_adjacency_matrix_all_documents():
-    adjacency = np.load('adjacency_references_all_documents.pkl')
-    return adjacency
-
+    adjacency = pickle.load(open("adjacency_references_all_documents.pkl", "rb"))
+    return adjacency.toarray()
 
 def add_articles_and_conclusion_to_documents(documents):
     documents_corrected = []

@@ -2,6 +2,10 @@ import DataLoader
 import numpy as np
 import pickle
 from collections import defaultdict
+import networkx as nx
+import hdbscan
+import json
+from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 
 def create_documents_for_clustering(documents, labels=None, mask=None):
 
