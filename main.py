@@ -3,13 +3,6 @@ import DataLoader
 import visualization
 
 
-json_path = 'D:\\datasets\\ECHR-OD_process-develop\\build\\echr_database\\preprocessed_documents'
-dataset_raw_documents_path = 'D:\\datasets\\ECHR-OD_process-develop\\build\echr_database\\raw_documents\\test'
-full_txt_dir = 'D:\\datasets\\ECHR-OD_process-develop\\build\\echr_database\\preprocessed_documents\\full_txt'
-tokenized_txt_dir = 'D:\\datasets\\ECHR-OD_process-develop\\build\\echr_database\\preprocessed_documents\\tokenized'
-
-
-
 def visualize_only():
     documents, labels, adj_matrix = DataLoader.load_data_for_visualize()
     visualization.doc_to_vec_visualize(documents=documents, labels=labels, adj_matrix=adj_matrix)
@@ -21,9 +14,9 @@ def run_pipeline():
     adjacency_matrix_references_all_documents = DataLoader.load_adjacency_matrix_all_documents()
 
     # Trains doc2vec
-    model = Clustering.train_doc2vec(tagged_data=tagged_documents, epochs_to_run=1, embedding_size=100)
+    model = Clustering.train_doc2vec(tagged_data=tagged_documents, epochs_to_run=100, embedding_size=100)
     # Runs HDBSCAN, returns a list of labels (a label for each documents. -1 == outlier)
-    labels = Clustering.run_hdbscan(model)
+    labels = Clustering.run_hdbscan(model=model, min_cluster_size=4, min_samples=4)
 
     # Extracts the documents which have been clustered such that we have no outliers
     # Mask denotes the ones to include and exclude. Labels of the clustered documents and the clustered documents
@@ -47,7 +40,7 @@ def run_pipeline_with_pretrained_doc2vec():
     # Load model
     model = DataLoader.load_model()
     # Runs HDBSCAN, returns a list of labels (a label for each documents. -1 == outlier)
-    labels = Clustering.run_hdbscan(model)
+    labels = Clustering.run_hdbscan(model=model, min_cluster_size=4, min_samples=4)
 
     # Extracts the documents which have been clustered such that we have no outliers
     # Mask denotes the ones to include and exclude. Labels of the clustered documents and the clustered documents
@@ -70,7 +63,7 @@ def main():
     # If train is True, the full pipeline will be run, where a clustering model is trained. This will take quite some time
     train = False
     # Runs pipeline with a loaded model. Set this to True and Train to False if you want to test the parameters of HDBSCAN
-    HDBSCAN = True
+    HDBSCAN = False
 
     if train:
         # Run training

@@ -1,5 +1,4 @@
 import os
-import json
 import Document
 import pickle
 import numpy as np
@@ -11,14 +10,9 @@ from gensim.models.doc2vec import TaggedDocument, Doc2Vec
 from nltk.tokenize import word_tokenize
 
 
-json_path = 'D:\\datasets\\ECHR-OD_process-develop\\build\\echr_database\\preprocessed_documents'
-dataset_raw_documents_path = 'D:\\datasets\\ECHR-OD_process-develop\\build\echr_database\\raw_documents\\test'
-full_txt_dir = 'D:\\datasets\\ECHR-OD_process-develop\\build\\echr_database\\preprocessed_documents\\full_txt'
-tokenized_txt_dir = 'D:\\datasets\\ECHR-OD_process-develop\\build\\echr_database\\preprocessed_documents\\tokenized'
-
-
-#dataset_path = 'E:\Job AAU\ECHR-OD_process-develop\\build\echr_database\structured' # 'D:\AI-for-the-people\structured'
-dataset_path = 'D:\datasets\ECHR_DATASET'
+dataset_path = 'ECHR_data'
+full_txt_dir = os.path.join(dataset_path, 'full_txt')
+json_path = os.path.join(dataset_path, 'cases_json')
 references_path = os.path.join(dataset_path, 'matrice_appnos.json')
 cases_path = os.path.join(dataset_path, 'cases.json')
 
@@ -168,7 +162,7 @@ def tokenize_txt_documents():
         with open(os.path.join(json_path, txt_document), "r", encoding='utf-8') as read_file:
             docs.append((word_tokenize((read_file.read().lower())), tag))
     tagged_data = [TaggedDocument(words=doc, tags=[tag]) for (doc, tag) in docs]
-    with open(os.path.join(tokenized_txt_dir, "tagged_documents.pickle"), "wb") as tagged_pickle:
+    with open("tagged_documents.pickle", "wb") as tagged_pickle:
         pickle.dump(tagged_data, tagged_pickle)
     return tagged_data
 

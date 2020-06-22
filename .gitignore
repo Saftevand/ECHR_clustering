@@ -30,3 +30,5 @@ tagged_documents_clustered.pickle
 tagged_documents.pickle
 
 adjacency_references_all_documents.pkl
+
+ECHR_data/
